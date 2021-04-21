@@ -2,6 +2,7 @@ from detector import ExtraDetector
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 import logging.config
@@ -32,7 +33,10 @@ class NuxChecker:
     def check_sport(self, sport):
         if not sport[1]:
             raise NoExtraTimeException(f'{sport[0]}')
-        driver = webdriver.Chrome(executable_path='./chromedriver')
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--start-maximized')
+        driver = webdriver.Chrome(executable_path='./chromedriver', chrome_options=chrome_options)
         driver.get(f"https://nuxbet.com/live?sport_id={sport[0]}")
 
         try:
@@ -46,6 +50,9 @@ class NuxChecker:
             try:
                 self.check_event_element(events_elements, event)
             except AssertionError:
+                ele = driver.find_element_by_xpath('//div[@class="appWrap"]')
+                total_height = ele.size["height"]
+                driver.set_window_size(1920, total_height)
                 driver.save_screenshot(f"./screens/{event[0]}_vs_{event[1]}.png")
                 logger.debug(f'saved {event[0]}_vs_{event[1]}')
         driver.close()
